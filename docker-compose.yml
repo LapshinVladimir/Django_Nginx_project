@@ -1,0 +1,41 @@
+version: '3'
+
+services:
+  django:
+    restart: always
+    build: movies_admin/.
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    container_name: work_django
+    depends_on:
+      - postgres
+
+  postgres:
+    restart: always
+    env_file:
+      - .env
+    image: 'postgres:${PG_VER}'
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    container_name: work_database
+    ports:
+      - "5432:5432"
+    volumes:
+      - ${DB_VOLUME_CATALOG_PATH}:/var/lib/postgresql/data/
+
+  nginx:
+    image: 'nginx:${NGINX_VER}'
+    volumes:
+      - ${NGINX_CONF_FILE}:/etc/nginx/nginx.conf:ro
+      - ${NGINX_CONFD_CATALOG}:/etc/nginx/conf.d:ro
+      - ${STATIC_PATH}:/var/www/static/:ro
+      - ${STATIC_PATH}:/opt/app/static/:ro
+    container_name: work_nginx
+    depends_on:
+      - django
+    ports:
+      - "80:80"
